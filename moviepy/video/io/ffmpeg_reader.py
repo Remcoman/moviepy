@@ -31,7 +31,8 @@ class FFMPEG_VideoReader:
         self.filename = filename
         infos = ffmpeg_parse_infos(filename, print_infos, check_duration)
         self.fps = infos['video_fps']
-        self.size = infos['video_size']
+        self.rotate = infos['rotate']
+        self.size = infos['video_size'] if abs(self.rotate % 180) == 0 else infos['video_size'][::-1]
         self.duration = infos['video_duration']
         self.ffmpeg_duration = infos['duration']
         self.nframes = infos['video_nframes']
@@ -254,6 +255,14 @@ def ffmpeg_parse_infos(filename, print_infos=False, check_duration=True):
 
     result = dict()
 
+    # get rotate (in degrees)
+    result['rotate'] = 0
+    try:
+        line = [l for l in lines if 'rotate' in l][0]
+        match = re.search("rotate[\s\t]*:[\s\t]*([0-9]+)", line)
+        result['rotate'] = int(match.group(1))
+    except:
+        pass
 
     # get duration (in seconds)
     result['duration'] = None
